@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>History • HabitTracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="css/theme.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <div class="brand-title">HabitTracker</div>
+          <div class="brand-subtitle">Discipline • Accountability</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a class="nav-link" href="dashboard.html">
+          <i class="bi bi-grid-1x2-fill nav-icon" aria-hidden="true"></i>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="habit.html">
+          <i class="bi bi-plus-circle nav-icon" aria-hidden="true"></i>
+          <span>Habit</span>
+        </a>
+        <a class="nav-link" href="pulseboard.html">
+          <i class="bi bi-kanban-fill nav-icon" aria-hidden="true"></i>
+          <span>PulseBoard</span>
+        </a>
+        <a class="nav-link" href="insights.html">
+          <i class="bi bi-graph-up nav-icon" aria-hidden="true"></i>
+          <span>Insights</span>
+        </a>
+        <a class="nav-link active" href="history.html" aria-current="page">
+          <i class="bi bi-clock-history nav-icon" aria-hidden="true"></i>
+          <span>History</span>
+        </a>
+        <a class="nav-link" href="settings.html">
+          <i class="bi bi-gear nav-icon" aria-hidden="true"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" type="button" class="btn btn-ghost-danger w-100">
+          <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <div class="topbar-kicker">History</div>
+          <h1 class="topbar-title">Full History</h1>
+        </div>
+
+        <div class="topbar-right">
+          <div class="month-picker">
+            <select id="historyYear" class="form-select form-select-sm"></select>
+            <select id="historyMonth" class="form-select form-select-sm"></select>
+            <button id="loadHistoryBtn" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-arrow-clockwise me-2" aria-hidden="true"></i>Load
+            </button>
+            <button id="toggleCompareBtn" class="btn btn-outline-secondary btn-sm" type="button">
+              <i class="bi bi-columns-gap me-2" aria-hidden="true"></i>Compare
+            </button>
+
+            <div id="comparePicker" class="compare-picker d-none">
+              <span class="compare-vs">vs</span>
+              <select id="compareYear" class="form-select form-select-sm"></select>
+              <select id="compareMonth" class="form-select form-select-sm"></select>
+              <button id="runCompareBtn" class="btn btn-outline-secondary btn-sm" type="button">
+                <i class="bi bi-play-fill me-2" aria-hidden="true"></i>Run
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="row g-4">
+        <div class="col-xl-5">
+          <section class="card glass-card p-4">
+            <div class="d-flex align-items-start justify-content-between gap-3">
+              <div>
+                <div class="section-title">Pick a Day</div>
+                <div class="section-subtitle">From signup → today. No missing days hidden.</div>
+              </div>
+              <div class="d-flex gap-2 align-items-center">
+                <input id="historyDate" type="date" class="form-control form-control-sm" style="max-width: 160px;">
+                <button id="goDateBtn" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-search me-2" aria-hidden="true"></i>Go
+                </button>
+              </div>
+            </div>
+
+            <div class="calendar-head mt-3">
+              <div class="calendar-head__left">
+                <div class="calendar-title" id="calendarTitle">—</div>
+                <div class="calendar-sub" id="calendarSub">—</div>
+              </div>
+              <div class="calendar-head__right">
+                <button id="prevMonthBtn" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                </button>
+                <button id="nextMonthBtn" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="calendar-grid mt-3" aria-label="Month calendar">
+              <div class="calendar-dow">Mon</div>
+              <div class="calendar-dow">Tue</div>
+              <div class="calendar-dow">Wed</div>
+              <div class="calendar-dow">Thu</div>
+              <div class="calendar-dow">Fri</div>
+              <div class="calendar-dow">Sat</div>
+              <div class="calendar-dow">Sun</div>
+            </div>
+            <div id="calendarDays" class="calendar-days"></div>
+
+            <div class="form-hint mt-3">
+              Locked days are final. Days without entries are counted as 0% in monthly graphs.
+            </div>
+          </section>
+        </div>
+
+        <div class="col-xl-7">
+          <section class="card glass-card p-4">
+            <div class="d-flex align-items-start justify-content-between gap-3">
+              <div>
+                <div class="section-title">Day Detail</div>
+                <div class="section-subtitle" id="daySubtitle">Select a date to view full detail.</div>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div class="progress-ring" id="dayRing" style="--p: 0">
+                  <div class="progress-ring__inner">
+                    <div class="progress-ring__value" id="dayRingValue">0%</div>
+                    <div class="progress-ring__label" id="dayRingLabel">0/0</div>
+                  </div>
+                </div>
+                <div class="d-none d-md-block" style="min-width: 190px;">
+                  <div class="stat-line m-0">
+                    <span class="stat-key">Mood</span>
+                    <span class="stat-val" id="dayMood">—</span>
+                  </div>
+                  <div class="stat-line m-0 mt-2">
+                    <span class="stat-key">Energy</span>
+                    <span class="stat-val" id="dayEnergy">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="insights-divider"></div>
+
+            <div class="row g-4">
+              <div class="col-lg-7">
+                <div class="section-title">Habits</div>
+                <div class="section-subtitle">Completed, missed, notes, actual values.</div>
+                <div id="dayHabitList" class="day-habit-list mt-3"></div>
+                <div id="dayPulseWrap" class="mt-4 d-none">
+                  <div class="section-title">PulseBoard</div>
+                  <div class="section-subtitle">Saved project-based + 24h-only tasks for this day.</div>
+                  <div class="day-pulse-table mt-3" aria-label="PulseBoard day tasks">
+                    <div class="day-pulse-row day-pulse-row--head" aria-hidden="true">
+                      <div>Done</div>
+                      <div>Task</div>
+                      <div>Type</div>
+                      <div>Project</div>
+                    </div>
+                    <div id="dayPulseList" class="day-pulse-list"></div>
+                  </div>
+                </div>
+                <div id="dayEmpty" class="empty-state d-none">
+                  <div class="empty-state__title">No entry</div>
+                  <div class="empty-state__subtitle">This date has no saved entry. If it’s today, use Dashboard.</div>
+                </div>
+              </div>
+
+              <div class="col-lg-5">
+                <section class="card glass-card p-3 hover-lift">
+                  <div class="section-title">Day Insights</div>
+                  <div class="section-subtitle">Quick read of your day.</div>
+                  <canvas id="dayDonut" height="180" class="mt-2"></canvas>
+                </section>
+
+                <section class="card glass-card p-3 mt-4 hover-lift">
+                  <div class="section-title">Last 7 Days</div>
+                  <div class="section-subtitle">Strict fill (missing days = 0%).</div>
+                  <canvas id="daySpark" height="120" class="mt-2"></canvas>
+                </section>
+              </div>
+            </div>
+
+            <div class="insights-divider"></div>
+
+            <div class="section-title">Journal</div>
+            <div class="section-subtitle">What you wrote that day.</div>
+          <textarea id="dayJournal" class="form-control mt-3 copy-box" rows="5" readonly placeholder="(no journal)"></textarea>
+          </section>
+
+          <section id="compareSection" class="card glass-card p-4 mt-4 d-none">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+              <div>
+                <div class="section-title">History Compare</div>
+                <div class="section-subtitle">Two months side-by-side: completion, categories, notes.</div>
+              </div>
+              <div class="stat-line m-0 compare-delta">
+                <span class="stat-key">Δ completion</span>
+                <span class="stat-val" id="compareDelta">0%</span>
+              </div>
+            </div>
+
+            <div class="row g-4 mt-2">
+              <div class="col-lg-6">
+                <div class="compare-side">
+                  <div class="d-flex align-items-center justify-content-between gap-3">
+                    <div class="section-title mb-0" id="compareMonthLabelA">Month A</div>
+                    <div class="progress-ring" id="compareRingA" style="--p: 0">
+                      <div class="progress-ring__inner">
+                        <div class="progress-ring__value" id="compareRingValueA">0%</div>
+                        <div class="progress-ring__label" id="compareRingLabelA">0 days</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="insights-divider"></div>
+                  <div class="section-title">Category Breakdown</div>
+                  <canvas id="compareCategoryChartA" height="220" class="mt-2"></canvas>
+
+                  <div class="insights-divider"></div>
+                  <div class="section-title">Notes Summary</div>
+                  <div id="compareNotesA" class="compare-notes mt-2"></div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="compare-side">
+                  <div class="d-flex align-items-center justify-content-between gap-3">
+                    <div class="section-title mb-0" id="compareMonthLabelB">Month B</div>
+                    <div class="progress-ring" id="compareRingB" style="--p: 0">
+                      <div class="progress-ring__inner">
+                        <div class="progress-ring__value" id="compareRingValueB">0%</div>
+                        <div class="progress-ring__label" id="compareRingLabelB">0 days</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="insights-divider"></div>
+                  <div class="section-title">Category Breakdown</div>
+                  <canvas id="compareCategoryChartB" height="220" class="mt-2"></canvas>
+
+                  <div class="insights-divider"></div>
+                  <div class="section-title">Notes Summary</div>
+                  <div id="compareNotesB" class="compare-notes mt-2"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card glass-card p-4 mt-4">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <div>
+                <div class="section-title">Month Overview</div>
+                <div class="section-subtitle">Frozen by month; strict average includes missing days.</div>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div class="progress-ring" id="historyRing" style="--p: 0">
+                  <div class="progress-ring__inner">
+                    <div class="progress-ring__value" id="historyRingValue">0%</div>
+                    <div class="progress-ring__label" id="historyRingLabel">0/0 days</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <canvas id="historyDailyChart" height="120" class="mt-2"></canvas>
+            <div class="insights-divider"></div>
+            <div class="section-title">Category Breakdown</div>
+            <div class="section-subtitle">Active habits × days in month.</div>
+            <canvas id="historyCategoryChart" height="120" class="mt-2"></canvas>
+          </section>
+
+          <section class="card glass-card p-4 mt-4">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <div>
+                <div class="section-title">AI Prompt Export</div>
+                <div class="section-subtitle">Copy-paste into any AI for analysis.</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button id="copyPromptBtn" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-clipboard me-2" aria-hidden="true"></i>Copy Prompt
+                </button>
+                <button id="copyExportBtn" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-clipboard-check me-2" aria-hidden="true"></i>Copy Export
+                </button>
+              </div>
+            </div>
+
+            <textarea id="promptBox" class="form-control mt-3 copy-box" rows="9" placeholder="Loading prompt…" readonly></textarea>
+            <div class="form-hint mt-2">Prompt includes your month export + a strict analysis request.</div>
+
+            <div class="insights-divider"></div>
+
+            <div class="section-title">Raw Month Export</div>
+            <div class="section-subtitle">Plain text snapshot (all days, habits, notes, journal).</div>
+            <textarea id="exportBox" class="form-control mt-3 copy-box" rows="9" placeholder="Loading export…" readonly></textarea>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/guard.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/history.js"></script>
+</body>
+</html>
