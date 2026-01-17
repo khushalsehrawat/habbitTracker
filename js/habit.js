@@ -19,6 +19,7 @@
   const submitBtn = document.getElementById("submitHabitBtn");
   const cancelEditBtn = document.getElementById("cancelEditBtn");
   const statusEl = document.getElementById("habitFormStatus");
+  const habitModePill = document.getElementById("habitModePill");
 
   const habitsList = document.getElementById("habitsList");
   const habitsEmpty = document.getElementById("habitsEmpty");
@@ -37,6 +38,22 @@
   const selectedDays = new Set();
   let cachedHabits = [];
 
+  function pop(el, className, durationMs = 280) {
+    if (!el) return;
+    el.classList.remove(className);
+    void el.offsetWidth;
+    el.classList.add(className);
+    window.setTimeout(() => el.classList.remove(className), durationMs);
+  }
+
+  function burst(host, kind = "primary") {
+    if (!host) return;
+    const el = document.createElement("span");
+    el.className = `lux-burst lux-burst--${kind}`;
+    host.appendChild(el);
+    el.addEventListener("animationend", () => el.remove(), { once: true });
+  }
+
   function setStatus(kind, message) {
     if (!statusEl) return;
     statusEl.classList.remove("d-none", "is-success", "is-error");
@@ -53,12 +70,20 @@
   function setCreateMode() {
     habitIdInput.value = "";
     cancelEditBtn?.classList.add("d-none");
+    if (habitModePill) {
+      habitModePill.textContent = "Create";
+      habitModePill.classList.remove("is-edit");
+    }
     submitBtn.innerHTML = `<i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Create Habit`;
   }
 
   function setEditMode(habit) {
     habitIdInput.value = String(habit.id);
     cancelEditBtn?.classList.remove("d-none");
+    if (habitModePill) {
+      habitModePill.textContent = "Editing";
+      habitModePill.classList.add("is-edit");
+    }
     submitBtn.innerHTML = `<i class="bi bi-check2-circle me-2" aria-hidden="true"></i>Update Habit`;
   }
 
@@ -275,9 +300,13 @@
       if (habitId) {
         await updateHabit(habitId, request);
         setStatus("success", "Habit updated.");
+        pop(submitBtn, "is-pop", 300);
+        burst(submitBtn, "primary");
       } else {
         await createHabit(request);
         setStatus("success", "Habit created.");
+        pop(submitBtn, "is-pop", 300);
+        burst(submitBtn, "gold");
       }
 
       form.reset();

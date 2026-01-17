@@ -32,7 +32,11 @@
   const lineChartEl = document.getElementById("dashMonthlyLineChart");
   const barChartEl = document.getElementById("dashMonthlyBarChart");
 
-  if (!taskList) return;
+  const monthCheckpointsScroll = document.getElementById("monthCheckpointsScroll");
+  const monthCheckpointsHead = document.getElementById("monthCheckpointsHead");
+  const monthCheckpointsBody = document.getElementById("monthCheckpointsBody");
+
+  if (!monthCheckpointsBody) return;
 
   let profile = null;
   let todayEntry = null;
@@ -49,6 +53,8 @@
   let draft = loadDraft();
   let autoSaveTimer = null;
   let isSaving = false;
+  let peekedIso = null;
+  let monthHoverWired = false;
 
   function setStatus(kind, message) {
     if (!dashboardStatus) return;
@@ -116,6 +122,15 @@
     return String(n).padStart(2, "0");
   }
 
+  function formatCategoryLabel(raw) {
+    const value = String(raw || "OTHER").trim();
+    if (!value) return "Other";
+    return value
+      .replaceAll("_", " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
   function toISODate(d) {
     const yyyy = d.getFullYear();
     const mm = pad2(d.getMonth() + 1);
@@ -125,6 +140,18 @@
 
   function fromISODate(iso) {
     return new Date(`${iso}T00:00:00`);
+  }
+
+  function isSameISO(a, b) {
+    return String(a || "") === String(b || "");
+  }
+
+  function isIsoInYearMonth(iso, year, month) {
+    const s = String(iso || "");
+    if (s.length < 7) return false;
+    const y = Number(s.slice(0, 4));
+    const m = Number(s.slice(5, 7));
+    return y === Number(year) && m === Number(month);
   }
 
   function daysInMonth(year, month) {
@@ -153,6 +180,23 @@
     el?.style.setProperty("--p", String(p));
     if (valueEl) valueEl.textContent = `${p}%`;
     if (labelEl) labelEl.textContent = label;
+  }
+
+  function pop(el, className, durationMs = 260) {
+    if (!el) return;
+    el.classList.remove(className);
+    // force reflow to restart animation
+    void el.offsetWidth;
+    el.classList.add(className);
+    window.setTimeout(() => el.classList.remove(className), durationMs);
+  }
+
+  function burst(host, kind = "primary") {
+    if (!host) return;
+    const el = document.createElement("span");
+    el.className = `lux-burst lux-burst--${kind}`;
+    host.appendChild(el);
+    el.addEventListener("animationend", () => el.remove(), { once: true });
   }
 
   function setClock() {
@@ -272,6 +316,7 @@
   }
 
   function renderHabits() {
+    if (!taskList) return;
     const entry = getSelectedEntry();
     const editable = isSelectedEditable();
     const habits = entry?.habits || [];
@@ -321,6 +366,7 @@
       row.dataset.habitId = habitId;
 
       const doneWrap = document.createElement("div");
+      doneWrap.className = "task-done-cell";
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.className = "form-check-input";
@@ -337,10 +383,7 @@
       habitCell.appendChild(title);
 
       const categoryCell = document.createElement("div");
-      const cat = String(hs.category || "OTHER")
-        .replaceAll("_", " ")
-        .toLowerCase()
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+      const cat = formatCategoryLabel(hs.category);
       categoryCell.innerHTML = `<span class="category-pill">${escapeHtml(cat)}</span>`;
 
       const targetCell = document.createElement("div");
@@ -387,8 +430,8 @@
 
       const actionCell = document.createElement("div");
       const statusPill = document.createElement("span");
-      statusPill.className = `pill${checkbox.checked ? " is-good" : ""}`;
-      statusPill.textContent = checkbox.checked ? "Done" : "Open";
+      statusPill.className = `pill ${checkbox.checked ? "is-good" : "is-bad"}`;
+      statusPill.textContent = cat;
       actionCell.appendChild(statusPill);
 
       row.appendChild(doneWrap);
@@ -403,10 +446,15 @@
           current.completed = Boolean(checkbox.checked);
           upsertRowDraft(habitId, current);
           row.classList.toggle("is-complete", checkbox.checked);
+          pop(row, "is-pop", 260);
+          pop(dayProgress, "is-bump", 340);
+          burst(doneWrap, checkbox.checked ? "gold" : "rose");
           statusPill.classList.toggle("is-good", checkbox.checked);
-          statusPill.textContent = checkbox.checked ? "Done" : "Open";
+          statusPill.classList.toggle("is-bad", !checkbox.checked);
+          statusPill.textContent = cat;
           scheduleAutoSave();
           updateSelectedDayRing();
+          renderMonthCheckpoints();
         });
       }
     }
@@ -431,7 +479,11 @@
   function percentForEntry(entry) {
     const hs = entry?.habits || [];
     const total = hs.length;
-    const completed = hs.reduce((count, h) => count + (Boolean(h.completed) ? 1 : 0), 0);
+    const completed = hs.reduce((count, h) => {
+      const isToday = todayEntry?.date && entry?.date && isSameISO(todayEntry.date, entry.date);
+      if (isToday) return count + (getOrInitRowDraft(h).completed ? 1 : 0);
+      return count + (Boolean(h.completed) ? 1 : 0);
+    }, 0);
     return total ? (completed * 100) / total : 0;
   }
 
@@ -441,6 +493,106 @@
     const percent = percentForEntry(todayEntry);
     dailyStatsMap.set(iso, clampPercent(percent));
     monthEntryMap.set(iso, todayEntry);
+  }
+
+  function setCheckpointCellVisual(cell, { kind } = { kind: "empty" }) {
+    if (!cell) return;
+    cell.classList.remove("is-done", "is-missed", "is-empty", "is-blank", "is-future", "is-disabled");
+
+    if (kind === "done") {
+      cell.classList.add("is-done");
+      cell.innerHTML = `<svg class="lux-icon" aria-hidden="true"><use href="#lux-check"></use></svg>`;
+    } else if (kind === "missed") {
+      cell.classList.add("is-missed");
+      cell.innerHTML = `<svg class="lux-icon" aria-hidden="true"><use href="#lux-x"></use></svg>`;
+    } else if (kind === "future") {
+      cell.classList.add("is-future", "is-disabled", "is-empty");
+      cell.innerHTML = `<svg class="lux-icon lux-icon--empty" aria-hidden="true"><use href="#lux-ghost"></use></svg>`;
+    } else if (kind === "no-entry") {
+      cell.classList.add("is-empty");
+      cell.innerHTML = `<svg class="lux-icon lux-icon--empty" aria-hidden="true"><use href="#lux-ghost"></use></svg>`;
+    } else if (kind === "inactive") {
+      cell.classList.add("is-blank");
+      cell.innerHTML = `<span class="checkpoint-dot checkpoint-dot--blank" aria-hidden="true"></span>`;
+    } else {
+      cell.classList.add("is-empty");
+      cell.innerHTML = `<svg class="lux-icon lux-icon--empty" aria-hidden="true"><use href="#lux-ghost"></use></svg>`;
+    }
+  }
+
+  function cssEscapeAttrValue(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(String(value));
+    return String(value).replaceAll('"', '\\"');
+  }
+
+  function clearPeekedColumn() {
+    if (!monthCheckpointsScroll) return;
+    if (!peekedIso) return;
+    const esc = cssEscapeAttrValue(peekedIso);
+    monthCheckpointsScroll
+      .querySelectorAll(`.checkpoint-cell.is-peeked[data-iso="${esc}"], .month-checkpoints-day.is-peeked[data-iso="${esc}"]`)
+      .forEach((el) => el.classList.remove("is-peeked"));
+    peekedIso = null;
+  }
+
+  function setPeekedColumn(iso) {
+    if (!monthCheckpointsScroll) return;
+    const next = String(iso || "");
+    if (!next) return;
+    if (peekedIso === next) return;
+    clearPeekedColumn();
+    peekedIso = next;
+    const esc = cssEscapeAttrValue(next);
+    monthCheckpointsScroll
+      .querySelectorAll(`.checkpoint-cell[data-iso="${esc}"], .month-checkpoints-day[data-iso="${esc}"]`)
+      .forEach((el) => el.classList.add("is-peeked"));
+  }
+
+  function wireMonthHoverPeek() {
+    if (!monthCheckpointsScroll) return;
+    if (monthHoverWired) return;
+    monthHoverWired = true;
+
+    monthCheckpointsScroll.addEventListener("mouseover", (e) => {
+      const target = e.target?.closest?.(".checkpoint-cell, .month-checkpoints-day");
+      if (!target) {
+        clearPeekedColumn();
+        return;
+      }
+      const iso = target.dataset?.iso;
+      if (!iso) return;
+      setPeekedColumn(iso);
+    });
+
+    monthCheckpointsScroll.addEventListener("mouseleave", () => {
+      clearPeekedColumn();
+    });
+  }
+
+  function toggleTodayHabit(habitId, { burstHost } = {}) {
+    const hs = todayEntry?.habits?.find((h) => String(h?.habitId) === String(habitId)) || null;
+    if (!hs) return;
+    const current = getOrInitRowDraft(hs);
+    setTodayHabitCompleted(habitId, !Boolean(current.completed), { burstHost });
+  }
+
+  function setTodayHabitCompleted(habitId, completed, { burstHost } = {}) {
+    if (!todayEntry?.date) return;
+    if (!isSelectedEditable()) return;
+
+    const hs = todayEntry?.habits?.find((h) => String(h?.habitId) === String(habitId)) || null;
+    if (!hs) return;
+
+    const nextRow = getOrInitRowDraft(hs);
+    nextRow.completed = Boolean(completed);
+    upsertRowDraft(String(habitId), nextRow);
+
+    updateSelectedDayRing();
+    pop(dayProgress, "is-bump", 340);
+    updateDailyStatsForToday();
+    renderMonthCharts();
+    scheduleAutoSave();
+    if (burstHost) burst(burstHost, nextRow.completed ? "gold" : "rose");
   }
 
   async function saveTodayNow({ kind } = { kind: "manual" }) {
@@ -501,6 +653,273 @@
       if (e?.date) map.set(String(e.date), e);
     }
     return map;
+  }
+
+  function buildHabitMetaList() {
+    const map = new Map();
+    const allowed = new Set((todayEntry?.habits || []).map((h) => String(h?.habitId)));
+
+    function ingestHabitState(hs) {
+      if (!hs?.habitId) return;
+      const habitId = String(hs.habitId);
+      const existing = map.get(habitId) || null;
+      const next = existing || {
+        habitId,
+        habitTitle: String(hs.habitTitle || ""),
+        category: String(hs.category || "OTHER"),
+        targetValue: hs.targetValue ?? null,
+        unit: hs.unit ?? null
+      };
+      if (!next.habitTitle) next.habitTitle = String(hs.habitTitle || "");
+      if (!next.category || next.category === "OTHER") next.category = String(hs.category || "OTHER");
+      if (next.targetValue == null && hs.targetValue != null) next.targetValue = hs.targetValue;
+      if (!next.unit && hs.unit) next.unit = hs.unit;
+      map.set(habitId, next);
+    }
+
+    for (const hs of todayEntry?.habits || []) ingestHabitState(hs);
+    for (const entry of monthEntries || []) {
+      for (const hs of entry?.habits || []) {
+        if (!hs?.habitId) continue;
+        if (!allowed.has(String(hs.habitId))) continue;
+        ingestHabitState(hs);
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => {
+      const cat = String(a.category).localeCompare(String(b.category));
+      if (cat !== 0) return cat;
+      return String(a.habitTitle).localeCompare(String(b.habitTitle));
+    });
+  }
+
+  function buildDayCompletionMap() {
+    const byIso = new Map();
+
+    for (const entry of monthEntries || []) {
+      if (!entry?.date) continue;
+      const iso = String(entry.date);
+      const map = new Map();
+      for (const hs of entry?.habits || []) {
+        if (!hs?.habitId) continue;
+        map.set(String(hs.habitId), Boolean(hs.completed));
+      }
+      byIso.set(iso, map);
+    }
+
+    if (todayEntry?.date) {
+      const iso = String(todayEntry.date);
+      const map = new Map();
+      for (const hs of todayEntry?.habits || []) {
+        if (!hs?.habitId) continue;
+        map.set(String(hs.habitId), Boolean(getOrInitRowDraft(hs).completed));
+      }
+      byIso.set(iso, map);
+    }
+
+    return byIso;
+  }
+
+  function renderMonthCheckpoints() {
+    if (!monthCheckpointsBody || !monthCheckpointsHead) return;
+    if (viewYear == null || viewMonth == null) return;
+
+    const dim = daysInMonth(viewYear, viewMonth);
+    const compact = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+    const leftCol = compact ? 190 : 210;
+
+    if (monthCheckpointsScroll && monthCheckpointsScroll.clientWidth) {
+      const styles = window.getComputedStyle(monthCheckpointsScroll);
+      const maxCell = Number.parseInt(styles.getPropertyValue("--mc-cell"), 10) || (compact ? 20 : 24);
+      const maxGap = Number.parseInt(styles.getPropertyValue("--mc-gap"), 10) || (compact ? 4 : 6);
+      const minCell = compact ? 16 : 18;
+      const minGap = compact ? 3 : 4;
+      const available = monthCheckpointsScroll.clientWidth;
+
+      let cell = maxCell;
+      let gap = maxGap;
+      const fits = () => leftCol + dim * cell + dim * gap <= available;
+
+      while (!fits() && (cell > minCell || gap > minGap)) {
+        if (cell > minCell) cell -= 1;
+        else gap -= 1;
+      }
+
+      monthCheckpointsScroll.style.setProperty("--mc-cell", `${cell}px`);
+      monthCheckpointsScroll.style.setProperty("--mc-gap", `${gap}px`);
+    }
+
+    const template = `${leftCol}px repeat(${dim}, var(--mc-cell, 34px))`;
+    monthCheckpointsHead.style.gridTemplateColumns = template;
+
+    monthCheckpointsHead.innerHTML = "";
+    monthCheckpointsBody.innerHTML = "";
+
+    const corner = document.createElement("div");
+    corner.className = "month-checkpoints-corner";
+    corner.textContent = "Habit";
+    monthCheckpointsHead.appendChild(corner);
+
+    const todayFloor = new Date();
+    todayFloor.setHours(0, 0, 0, 0);
+    const todayIso = toISODate(todayFloor);
+    const signup = profile?.signupDate ? fromISODate(profile.signupDate) : null;
+
+    for (let day = 1; day <= dim; day++) {
+      const dateObj = new Date(viewYear, viewMonth - 1, day);
+      const iso = toISODate(dateObj);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "month-checkpoints-day";
+      btn.classList.add("month-checkpoints-day--label");
+      btn.dataset.iso = iso;
+      const num = document.createElement("span");
+      num.className = "month-checkpoints-day__num";
+      num.textContent = String(day);
+      btn.appendChild(num);
+      if (iso === todayIso) {
+        const tick = document.createElement("i");
+        tick.className = "bi bi-check2 month-checkpoints-day__tick";
+        tick.setAttribute("aria-hidden", "true");
+        btn.appendChild(tick);
+      }
+      btn.title = dateObj.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+      btn.classList.toggle("is-today", iso === todayIso);
+      btn.classList.toggle("is-selected", iso === selectedIso);
+      btn.classList.toggle("is-future", dateObj > todayFloor);
+      btn.setAttribute("aria-disabled", "true");
+      btn.tabIndex = -1;
+      monthCheckpointsHead.appendChild(btn);
+    }
+
+    const habits = buildHabitMetaList();
+    if (!habits.length) {
+      monthCheckpointsBody.innerHTML = `<div class="p-3 muted">No habits yet.</div>`;
+      return;
+    }
+
+    const completionByIso = buildDayCompletionMap();
+
+    for (const habit of habits) {
+      const row = document.createElement("div");
+      row.className = "month-checkpoints-row";
+      row.style.gridTemplateColumns = template;
+
+      const left = document.createElement("div");
+      left.className = "month-checkpoints-habit month-checkpoints-habit--rich";
+
+      const hsToday = todayEntry?.habits?.find((h) => String(h?.habitId) === String(habit.habitId)) || null;
+      const todayDone = hsToday ? Boolean(getOrInitRowDraft(hsToday).completed) : false;
+
+      const leftText = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "month-checkpoints-habit__title";
+      title.textContent = habit.habitTitle || "Habit";
+      const meta = document.createElement("div");
+      meta.className = "month-checkpoints-habit__meta";
+      const cat = formatCategoryLabel(habit.category);
+      const target =
+        habit.targetValue != null
+          ? `Target: ${habit.targetValue}${habit.unit ? ` ${habit.unit}` : ""}`
+          : "Target: —";
+      meta.textContent = target;
+      leftText.appendChild(title);
+      leftText.appendChild(meta);
+      left.appendChild(leftText);
+
+      const statusPill = document.createElement("span");
+      statusPill.className = `pill ${todayDone ? "is-good" : "is-bad"}`;
+      statusPill.textContent = cat;
+      left.appendChild(statusPill);
+      left.classList.toggle("is-complete", todayDone);
+      row.appendChild(left);
+
+      for (let day = 1; day <= dim; day++) {
+        const dateObj = new Date(viewYear, viewMonth - 1, day);
+        const iso = toISODate(dateObj);
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "checkpoint-cell";
+        cell.dataset.iso = iso;
+
+        const beforeSignup = signup && dateObj < signup;
+        const isFuture = dateObj > todayFloor;
+        const isToday = iso === todayIso;
+        const isPast = dateObj < todayFloor;
+        cell.classList.toggle("is-today", isToday);
+
+        const nice = dateObj.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+        const dayMap = completionByIso.get(iso) || null;
+        const hasEntry = monthEntryMap.has(iso);
+        const hasStatus = Boolean(dayMap && dayMap.has(habit.habitId));
+        const completed = hasStatus ? Boolean(dayMap.get(habit.habitId)) : false;
+
+        if (beforeSignup) {
+          cell.disabled = true;
+          setCheckpointCellVisual(cell, { kind: "future" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Disabled`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: disabled`);
+        } else if (isFuture) {
+          cell.disabled = true;
+          setCheckpointCellVisual(cell, { kind: "future" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Future (disabled)`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: future disabled`);
+        } else if (isToday && hasStatus) {
+          cell.disabled = false;
+          setCheckpointCellVisual(cell, { kind: completed ? "done" : "missed" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - ${completed ? "Completed" : "Open"}`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: ${completed ? "completed" : "open"}`);
+          cell.addEventListener("click", () => {
+            toggleTodayHabit(habit.habitId, { burstHost: cell });
+            const hs = todayEntry?.habits?.find((h) => String(h?.habitId) === String(habit.habitId)) || null;
+            const nowDone = hs ? Boolean(getOrInitRowDraft(hs).completed) : false;
+            setCheckpointCellVisual(cell, { kind: nowDone ? "done" : "missed" });
+            pop(cell, "is-pop", 380);
+            statusPill.classList.toggle("is-good", nowDone);
+            statusPill.classList.toggle("is-bad", !nowDone);
+            left.classList.toggle("is-complete", nowDone);
+          });
+        } else if (hasEntry && hasStatus && completed) {
+          cell.disabled = true;
+          setCheckpointCellVisual(cell, { kind: "done" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Completed (read-only)`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: completed (read-only)`);
+        } else if (hasEntry && hasStatus) {
+          cell.disabled = true;
+          setCheckpointCellVisual(cell, { kind: "missed" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Missed (read-only)`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: missed (read-only)`);
+        } else if (!hasEntry && isPast) {
+          cell.disabled = true;
+          cell.classList.add("is-assumed");
+          setCheckpointCellVisual(cell, { kind: "missed" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Missed (not saved)`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: missed (not saved)`);
+        } else if (!hasEntry) {
+          cell.disabled = true;
+          setCheckpointCellVisual(cell, { kind: "future" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Future (disabled)`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: future (disabled)`);
+        } else {
+          cell.disabled = true;
+          setCheckpointCellVisual(cell, { kind: "inactive" });
+          cell.title = `${habit.habitTitle || "Habit"} - ${nice} - Not active`;
+          cell.setAttribute("aria-label", `${habit.habitTitle || "Habit"} on ${nice}: not active`);
+        }
+
+        cell.classList.toggle("is-selected", iso === selectedIso);
+        cell.classList.toggle("is-future", isFuture);
+        row.appendChild(cell);
+      }
+
+      monthCheckpointsBody.appendChild(row);
+    }
+
+    if (monthCheckpointsScroll) {
+      monthCheckpointsScroll.dataset.ready = "1";
+    }
   }
 
   function renderMonthCharts() {
@@ -590,11 +1009,13 @@
 
   function renderMonth() {
     renderMonthCharts();
+    renderMonthCheckpoints();
   }
 
   function renderSelectedDay() {
     updateSelectedDayHeader();
-    renderHabits();
+    if (taskList) renderHabits();
+    else updateSelectedDayRing();
   }
 
   async function loadMonth(year, month) {
@@ -618,7 +1039,8 @@
     updateDailyStatsForToday();
 
     // Day card stays pinned to today (read-only for other dates is handled by backend rule).
-    selectedIso = todayEntry?.date ? String(todayEntry.date) : null;
+    const todayIso = todayEntry?.date ? String(todayEntry.date) : null;
+    selectedIso = todayIso;
 
     renderMonth();
     renderSelectedDay();
@@ -640,6 +1062,16 @@
       setClock();
       setTodayMeta();
     }, 1000);
+
+    wireMonthHoverPeek();
+
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      if (resizeTimer) window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        renderMonthCheckpoints();
+      }, 120);
+    });
 
     try {
       const [profileData, today, streak] = await Promise.all([getMyProfile(), getOrCreateToday(), getStreakStats()]);
