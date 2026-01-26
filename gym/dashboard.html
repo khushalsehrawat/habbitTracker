@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Gym Dashboard • HabitTracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="gym.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+  <script>
+    (() => {
+      try {
+        if (localStorage.getItem("ht.sidebar.collapsed.v1") === "1") {
+          document.documentElement.classList.add("ht-sidebar-collapsed");
+        }
+      } catch { }
+    })();
+  </script>
+</head>
+
+<body class="page-gym-dashboard">
+  <div class="app-shell">
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <button id="sidebarToggleBtn" type="button" class="brand-mark brand-mark--toggle" aria-label="Collapse sidebar"
+          aria-pressed="false">
+          <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i>
+        </button>
+        <div class="brand-text">
+          <div class="brand-title">HabitTracker</div>
+          <div class="brand-subtitle">Discipline • Accountability</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a class="nav-link" href="../dashboard.html">
+          <i class="bi bi-grid-1x2-fill nav-icon" aria-hidden="true"></i>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="../habit.html">
+          <i class="bi bi-plus-circle nav-icon" aria-hidden="true"></i>
+          <span>Habit</span>
+        </a>
+        <a class="nav-link" href="../insights.html">
+          <i class="bi bi-graph-up nav-icon" aria-hidden="true"></i>
+          <span>Insights</span>
+        </a>
+        <a class="nav-link" href="../history.html">
+          <i class="bi bi-clock-history nav-icon" aria-hidden="true"></i>
+          <span>History</span>
+        </a>
+        <a class="nav-link" href="../settings.html">
+          <i class="bi bi-gear nav-icon" aria-hidden="true"></i>
+          <span>Settings</span>
+        </a>
+        <a class="nav-link active" href="dashboard.html" aria-current="page">
+          <i class="bi bi-activity nav-icon" aria-hidden="true"></i>
+          <span>Gym</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-panel">
+        <div class="sidebar-panel__head">
+          <div class="sidebar-panel__title">
+            <i class="bi bi-activity" aria-hidden="true"></i>
+            Gym
+          </div>
+        </div>
+        <nav class="sidebar-nav mt-2" aria-label="Gym navigation">
+          <a class="nav-link active" href="dashboard.html" aria-current="page">
+            <i class="bi bi-calendar2-week nav-icon" aria-hidden="true"></i>
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-link" href="workout-setup.html">
+            <i class="bi bi-sliders nav-icon" aria-hidden="true"></i>
+            <span>Workout Setup</span>
+          </a>
+          <a class="nav-link" href="exercise-setup.html">
+            <i class="bi bi-list-check nav-icon" aria-hidden="true"></i>
+            <span>Exercise Setup</span>
+          </a>
+          <a class="nav-link" href="meal-setup.html">
+            <i class="bi bi-egg-fried nav-icon" aria-hidden="true"></i>
+            <span>Meal Setup</span>
+          </a>
+          <a class="nav-link" href="body-settings.html">
+            <i class="bi bi-person-bounding-box nav-icon" aria-hidden="true"></i>
+            <span>Body Settings</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" type="button" class="btn btn-ghost-danger w-100">
+          <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <div class="topbar-kicker">
+            <span class="gym-mode-pill">
+              <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i>
+              Gym Mode
+            </span>
+            <span>Welcome, <span id="welcomeName">User</span></span>
+          </div>
+          <h1 class="topbar-title">Gym Dashboard</h1>
+        </div>
+        <div class="topbar-right">
+          <button id="topWeightBtn" type="button" class="gym-top-weight" aria-label="Body weight trend"
+            aria-controls="weightTrend" aria-expanded="false">
+            <div class="gym-top-weight__label">Weight</div>
+            <div id="topWeightText" class="gym-top-weight__value">—</div>
+          </button>
+          <div class="time-card" role="group" aria-label="Current time">
+            <div class="time-meta">
+              <span id="todayDay">—</span>
+              <span class="time-dot" aria-hidden="true">•</span>
+              <span id="todayDate">—</span>
+              <span id="todayYear" class="time-year">—</span>
+            </div>
+            <div id="liveTime" class="time-clock">--:--:--</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="gym-dashboard-layout">
+        <section class="card glass-card p-4 gym-week-panel">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+              <div class="section-title">Week</div>
+              <div class="section-subtitle">Workout type by day.</div>
+            </div>
+            <div id="dayKindBadge" class="gym-badge is-today d-none">
+              <i class="bi bi-circle-fill" aria-hidden="true" style="font-size: 8px;"></i>
+              <span id="dayKindText">Today</span>
+            </div>
+          </div>
+          <div class="gym-divider"></div>
+          <div id="weekPlan" class="gym-week-plan" role="list" aria-label="Week plan"></div>
+
+          <div id="weekDetail" class="gym-week-detail is-open" aria-label="Selected day workout">
+            <div class="gym-divider"></div>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+              <div>
+                <div class="section-title">Record</div>
+                <div class="section-subtitle" id="selectedDaySubtitle">Today opens by default.</div>
+              </div>
+              <a href="workout-setup.html" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-sliders me-2" aria-hidden="true"></i>
+                Setup
+              </a>
+            </div>
+
+            <div class="gym-divider"></div>
+            <div id="workoutBlock">
+              <div class="gym-skeleton" style="height: 76px;"></div>
+              <div class="gym-skeleton mt-3" style="height: 76px;"></div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between gap-3 mt-3">
+              <div id="workoutStatus" class="form-status d-none" style="flex: 1;"></div>
+              <button id="saveWorkoutBtn" type="button" class="btn btn-primary">
+                <i class="bi bi-cloud-check-fill me-2" aria-hidden="true"></i>
+                Save
+              </button>
+            </div>
+          </div>
+
+          <div class="gym-divider"></div>
+          <div class="d-flex align-items-center justify-content-between gap-2">
+            <div class="gym-helper">Body weight</div>
+            <div id="bodyWeightPill" class="gym-badge">—</div>
+          </div>
+          <div id="weightTrendHint" class="gym-helper mt-2">Click your weight (top-right) to view trend.</div>
+          <div id="weightTrend" class="gym-weight-trend mt-3" hidden></div>
+        </section>
+
+
+      </div>
+
+      <section id="mealsSection" class="card glass-card p-4 mt-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <div class="section-title">Meals</div>
+            <div class="section-subtitle">Select a meal and log what you ate.</div>
+          </div>
+          <a href="meal-setup.html" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-egg-fried me-2" aria-hidden="true"></i>
+            Templates
+          </a>
+        </div>
+
+        <div class="gym-divider"></div>
+
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-2">
+          <div class="gym-helper">Add a meal from your templates.</div>
+          <div class="d-flex gap-2 flex-wrap">
+            <select id="mealTemplateSelect" class="form-select form-select-sm" style="min-width: 240px;">
+              <option value="">Add meal…</option>
+            </select>
+            <button id="addMealBtn" type="button" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+              Add
+            </button>
+          </div>
+        </div>
+
+        <div class="gym-divider"></div>
+
+        <div id="mealsBlock">
+          <div class="gym-skeleton" style="height: 120px;"></div>
+          <div class="gym-skeleton mt-3" style="height: 120px;"></div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between gap-3 mt-3">
+          <div id="mealsStatus" class="form-status d-none" style="flex: 1;"></div>
+          <button id="saveMealsBtn" type="button" class="btn btn-primary">
+            <i class="bi bi-cloud-check-fill me-2" aria-hidden="true"></i>
+            Save Meals
+          </button>
+        </div>
+      </section>
+
+      <div class="gym-dashboard-bottom mt-4">
+        <section class="card glass-card p-4">
+          <div class="section-title">Macros</div>
+          <div class="section-subtitle">Intake vs target.</div>
+          <div class="gym-divider"></div>
+          <div id="summaryBlock">
+            <div class="gym-skeleton" style="height: 120px;"></div>
+          </div>
+        </section>
+
+        <section class="card glass-card p-4">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+              <div class="section-title">Targets</div>
+              <div class="section-subtitle">Read-only targets from Body Settings.</div>
+            </div>
+            <a href="body-settings.html" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-person-bounding-box me-2" aria-hidden="true"></i>
+              Body
+            </a>
+          </div>
+          <div class="gym-divider"></div>
+          <div id="targetsBlock">
+            <div class="gym-skeleton" style="height: 128px;"></div>
+          </div>
+        </section>
+
+        <section class="card glass-card p-4">
+          <div class="section-title">Notes</div>
+          <div class="section-subtitle">Supplements · reminders · anything.</div>
+          <div class="gym-divider"></div>
+          <textarea id="gymNotesText" class="form-control" rows="8" placeholder="e.g., Vit C, B12, creatine…"></textarea>
+          <div class="gym-helper mt-2" id="gymNotesHint">Saved locally for this date.</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/guard.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="js/gymCommon.js"></script>
+  <script src="js/gymDashboard.js"></script>
+</body>
+</html>

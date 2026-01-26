@@ -1,0 +1,858 @@
+:root {
+  --gym-chip-bg: rgba(255, 255, 255, 0.72);
+}
+
+body.page-gym-dashboard,
+body.page-gym-workout-setup,
+body.page-gym-exercise-setup,
+body.page-gym-meal-setup,
+body.page-gym-body-settings {
+  --gym-accent: rgba(0, 194, 168, 1);
+  --gym-accent-soft: rgba(0, 194, 168, 0.12);
+  --gym-ink: rgba(15, 23, 42, 1);
+  --gym-glass: rgba(255, 255, 255, 0.76);
+  --gym-glass-strong: rgba(255, 255, 255, 0.84);
+  --gym-focus: rgba(0, 194, 168, 0.34);
+  --gym-focus-soft: rgba(0, 194, 168, 0.16);
+  --bg-gradient:
+    radial-gradient(980px circle at 12% 6%, rgba(0, 194, 168, 0.18), transparent 52%),
+    radial-gradient(980px circle at 90% 8%, rgba(108, 99, 255, 0.16), transparent 52%),
+    radial-gradient(980px circle at 86% 90%, rgba(0, 194, 168, 0.10), transparent 58%),
+    linear-gradient(135deg, #F8FBFF, #EEF4FF, #FFFFFF);
+}
+
+body.page-gym-dashboard::before,
+body.page-gym-workout-setup::before,
+body.page-gym-exercise-setup::before,
+body.page-gym-meal-setup::before,
+body.page-gym-body-settings::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(680px circle at 18% 22%, rgba(255, 255, 255, 0.65), transparent 58%),
+    radial-gradient(520px circle at 72% 18%, rgba(255, 255, 255, 0.45), transparent 52%),
+    repeating-linear-gradient(135deg, rgba(17, 24, 39, 0.04) 0, rgba(17, 24, 39, 0.04) 1px, transparent 1px, transparent 12px);
+  opacity: 0.22;
+}
+
+body.page-gym-dashboard .app-topbar,
+body.page-gym-workout-setup .app-topbar,
+body.page-gym-exercise-setup .app-topbar,
+body.page-gym-meal-setup .app-topbar,
+body.page-gym-body-settings .app-topbar {
+  align-items: center;
+  background: var(--gym-glass);
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: 0 20px 50px rgba(17, 24, 39, 0.06);
+}
+
+body.page-gym-dashboard .topbar-kicker,
+body.page-gym-workout-setup .topbar-kicker,
+body.page-gym-exercise-setup .topbar-kicker,
+body.page-gym-meal-setup .topbar-kicker,
+body.page-gym-body-settings .topbar-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gym-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 194, 168, 0.22);
+  background: rgba(0, 194, 168, 0.10);
+  color: rgba(6, 122, 107, 0.98);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+
+.gym-mode-pill i {
+  font-size: 12px;
+}
+
+body.page-gym-dashboard .glass-card,
+body.page-gym-workout-setup .glass-card,
+body.page-gym-exercise-setup .glass-card,
+body.page-gym-meal-setup .glass-card,
+body.page-gym-body-settings .glass-card {
+  background: var(--gym-glass-strong);
+  border-color: rgba(17, 24, 39, 0.10);
+  box-shadow: 0 24px 56px rgba(17, 24, 39, 0.07);
+  backdrop-filter: blur(14px);
+}
+
+body.page-gym-dashboard .time-card,
+body.page-gym-workout-setup .time-card,
+body.page-gym-exercise-setup .time-card,
+body.page-gym-meal-setup .time-card,
+body.page-gym-body-settings .time-card {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(17, 24, 39, 0.10);
+}
+
+body.page-gym-dashboard .topbar-title,
+body.page-gym-workout-setup .topbar-title,
+body.page-gym-exercise-setup .topbar-title,
+body.page-gym-meal-setup .topbar-title,
+body.page-gym-body-settings .topbar-title {
+  color: var(--gym-ink);
+}
+
+body.page-gym-dashboard .brand-mark,
+body.page-gym-workout-setup .brand-mark,
+body.page-gym-exercise-setup .brand-mark,
+body.page-gym-meal-setup .brand-mark,
+body.page-gym-body-settings .brand-mark {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.25)),
+    linear-gradient(135deg, rgba(0,194,168,0.95), rgba(108,99,255,0.72));
+}
+
+body.page-gym-dashboard .app-sidebar,
+body.page-gym-workout-setup .app-sidebar,
+body.page-gym-exercise-setup .app-sidebar,
+body.page-gym-meal-setup .app-sidebar,
+body.page-gym-body-settings .app-sidebar {
+  background:
+    radial-gradient(880px circle at 20% 10%, rgba(0, 194, 168, 0.10), transparent 55%),
+    radial-gradient(880px circle at 95% 8%, rgba(108, 99, 255, 0.10), transparent 55%),
+    rgba(255, 255, 255, 0.72);
+}
+
+body.page-gym-dashboard .sidebar-nav .nav-link:hover,
+body.page-gym-workout-setup .sidebar-nav .nav-link:hover,
+body.page-gym-exercise-setup .sidebar-nav .nav-link:hover,
+body.page-gym-meal-setup .sidebar-nav .nav-link:hover,
+body.page-gym-body-settings .sidebar-nav .nav-link:hover {
+  background: rgba(0, 194, 168, 0.10);
+  color: rgba(6, 122, 107, 0.98);
+  box-shadow: inset 0 0 0 1px rgba(0, 194, 168, 0.12);
+}
+
+body.page-gym-dashboard .sidebar-nav .nav-link.active,
+body.page-gym-workout-setup .sidebar-nav .nav-link.active,
+body.page-gym-exercise-setup .sidebar-nav .nav-link.active,
+body.page-gym-meal-setup .sidebar-nav .nav-link.active,
+body.page-gym-body-settings .sidebar-nav .nav-link.active {
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,0.92), rgba(0,194,168,0.18)),
+    rgba(0, 194, 168, 0.10);
+  color: rgba(6, 122, 107, 0.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 194, 168, 0.18),
+    0 12px 30px rgba(0, 194, 168, 0.12);
+}
+
+body.page-gym-dashboard .sidebar-panel,
+body.page-gym-workout-setup .sidebar-panel,
+body.page-gym-exercise-setup .sidebar-panel,
+body.page-gym-meal-setup .sidebar-panel,
+body.page-gym-body-settings .sidebar-panel {
+  border-color: rgba(0, 194, 168, 0.18);
+  background: rgba(255, 255, 255, 0.70);
+}
+
+body.page-gym-dashboard .btn-primary,
+body.page-gym-workout-setup .btn-primary,
+body.page-gym-exercise-setup .btn-primary,
+body.page-gym-meal-setup .btn-primary,
+body.page-gym-body-settings .btn-primary {
+  border: none;
+  background: linear-gradient(135deg, rgba(76, 67, 220, 0.95), rgba(0, 194, 168, 0.92));
+  box-shadow: 0 16px 38px rgba(76, 67, 220, 0.18);
+}
+
+body.page-gym-dashboard .btn-primary:hover,
+body.page-gym-workout-setup .btn-primary:hover,
+body.page-gym-exercise-setup .btn-primary:hover,
+body.page-gym-meal-setup .btn-primary:hover,
+body.page-gym-body-settings .btn-primary:hover {
+  filter: saturate(1.06) brightness(0.98);
+  box-shadow: 0 18px 44px rgba(0, 194, 168, 0.16);
+}
+
+body.page-gym-dashboard .btn-primary:focus-visible,
+body.page-gym-workout-setup .btn-primary:focus-visible,
+body.page-gym-exercise-setup .btn-primary:focus-visible,
+body.page-gym-meal-setup .btn-primary:focus-visible,
+body.page-gym-body-settings .btn-primary:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 194, 168, 0.18), 0 18px 44px rgba(17, 24, 39, 0.10);
+}
+
+body.page-gym-dashboard .btn-outline-secondary,
+body.page-gym-workout-setup .btn-outline-secondary,
+body.page-gym-exercise-setup .btn-outline-secondary,
+body.page-gym-meal-setup .btn-outline-secondary,
+body.page-gym-body-settings .btn-outline-secondary {
+  border-color: rgba(17, 24, 39, 0.14);
+  background: rgba(255, 255, 255, 0.58);
+  font-weight: 900;
+}
+
+body.page-gym-dashboard .btn-outline-secondary:hover,
+body.page-gym-workout-setup .btn-outline-secondary:hover,
+body.page-gym-exercise-setup .btn-outline-secondary:hover,
+body.page-gym-meal-setup .btn-outline-secondary:hover,
+body.page-gym-body-settings .btn-outline-secondary:hover {
+  border-color: rgba(108, 99, 255, 0.34);
+  background: rgba(108, 99, 255, 0.08);
+}
+
+body.page-gym-dashboard .form-control,
+body.page-gym-dashboard .form-select,
+body.page-gym-workout-setup .form-control,
+body.page-gym-workout-setup .form-select,
+body.page-gym-exercise-setup .form-control,
+body.page-gym-exercise-setup .form-select,
+body.page-gym-meal-setup .form-control,
+body.page-gym-meal-setup .form-select,
+body.page-gym-body-settings .form-control,
+body.page-gym-body-settings .form-select {
+  border-radius: 14px;
+  border-color: rgba(17, 24, 39, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  font-weight: 800;
+  box-shadow: none;
+}
+
+body.page-gym-dashboard .form-control:focus,
+body.page-gym-dashboard .form-select:focus,
+body.page-gym-workout-setup .form-control:focus,
+body.page-gym-workout-setup .form-select:focus,
+body.page-gym-exercise-setup .form-control:focus,
+body.page-gym-exercise-setup .form-select:focus,
+body.page-gym-meal-setup .form-control:focus,
+body.page-gym-meal-setup .form-select:focus,
+body.page-gym-body-settings .form-control:focus,
+body.page-gym-body-settings .form-select:focus {
+  border-color: rgba(0, 194, 168, 0.52);
+  box-shadow: 0 0 0 0.2rem var(--gym-focus-soft);
+}
+
+body.page-gym-dashboard.gym-is-loading .app-main,
+body.page-gym-workout-setup.gym-is-loading .app-main,
+body.page-gym-exercise-setup.gym-is-loading .app-main,
+body.page-gym-meal-setup.gym-is-loading .app-main,
+body.page-gym-body-settings.gym-is-loading .app-main {
+  opacity: 0.92;
+  transition: opacity 180ms ease;
+}
+
+body.gym-mode .app-topbar,
+body.gym-mode .glass-card {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+body.gym-mode.gym-enter .app-topbar,
+body.gym-mode.gym-enter .glass-card {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 420ms ease, transform 420ms ease, box-shadow 220ms ease;
+}
+
+.gym-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(17, 24, 39, 0.14), transparent);
+  margin: 16px 0;
+}
+
+/* Dashboard layout (sketch-style) */
+.gym-dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+body.page-gym-dashboard .gym-dashboard-layout {
+  grid-template-columns: 1fr;
+}
+
+body.page-gym-dashboard .topbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gym-top-weight {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.70);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+  min-width: 110px;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.gym-top-weight:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 44px rgba(17, 24, 39, 0.08);
+}
+
+.gym-top-weight:focus-visible {
+  outline: 2px solid rgba(108, 99, 255, 0.65);
+  outline-offset: 3px;
+}
+
+.gym-top-weight__label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.gym-top-weight__value {
+  margin-top: 2px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+body.page-gym-dashboard .gym-week-plan {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+body.page-gym-dashboard .gym-week-row {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 16px;
+  padding: 12px 12px;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 92px;
+}
+
+.gym-week-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 44px rgba(17, 24, 39, 0.08);
+}
+
+.gym-week-row.is-active {
+  border-color: rgba(108, 99, 255, 0.72);
+  box-shadow: 0 26px 66px rgba(108, 99, 255, 0.16);
+}
+
+.gym-week-row.is-today {
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,0.92), rgba(108,99,255,0.16)),
+    rgba(108, 99, 255, 0.06);
+}
+
+.gym-week-row.is-disabled {
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.gym-week-detail {
+  border-radius: 18px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.62);
+  padding: 12px 12px;
+  margin-top: 12px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 220ms ease, opacity 220ms ease;
+}
+
+.gym-week-detail.is-open {
+  max-height: 4200px;
+  opacity: 1;
+}
+
+body.page-gym-dashboard .gym-week-row__dow {
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  font-size: 12.5px;
+}
+
+body.page-gym-dashboard .gym-week-row__date {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(17, 24, 39, 0.62);
+  font-weight: 800;
+}
+
+body.page-gym-dashboard .gym-week-row__workout {
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+body.page-gym-dashboard .gym-week-row__workout small {
+  display: none;
+}
+
+@media (max-width: 980px) {
+  body.page-gym-dashboard .gym-week-plan {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  body.page-gym-dashboard .gym-week-plan {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.gym-weight-trend {
+  display: grid;
+  gap: 8px;
+}
+
+.gym-weight-chart {
+  border-radius: 16px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.68);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+.gym-weight-chart__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.gym-weight-chart__svg {
+  display: block;
+}
+
+.gym-weight-chart__line {
+  fill: none;
+  stroke: rgba(108, 99, 255, 0.95);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gym-weight-chart__dots circle {
+  fill: rgba(108, 99, 255, 0.95);
+}
+
+.gym-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: rgba(108, 99, 255, 0.10);
+  color: rgba(17, 24, 39, 0.78);
+}
+
+.gym-weight-trend__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.gym-weight-trend__label {
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.72);
+}
+
+.gym-weight-trend__value {
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+
+.gym-meals-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gym-meal-col {
+  border-radius: 18px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.66);
+  padding: 12px 12px;
+  box-shadow: var(--shadow-soft);
+  min-height: 92px;
+}
+
+.gym-meal-col__toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gym-meal-col__toggle:focus-visible {
+  outline: 2px solid rgba(108, 99, 255, 0.65);
+  outline-offset: 4px;
+  border-radius: 14px;
+}
+
+.gym-meal-col__chev {
+  transition: transform 160ms ease;
+  opacity: 0.75;
+}
+
+.gym-meal-col.is-open .gym-meal-col__chev {
+  transform: rotate(180deg);
+}
+
+.gym-meal-col__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.62);
+  font-weight: 800;
+}
+
+.gym-meal-col__title {
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+
+.gym-meal-col__summary {
+  border-radius: 14px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.58);
+  padding: 10px 12px;
+}
+
+.gym-meal-col__controls {
+  display: grid;
+  grid-template-columns: 1fr 38px;
+  gap: 8px;
+  align-items: center;
+}
+
+.gym-meal-card {
+  border-radius: 16px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.74);
+  padding: 12px 12px;
+}
+
+.gym-meal-card + .gym-meal-card {
+  margin-top: 10px;
+}
+
+.gym-meal-card__head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gym-meal-card__title {
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+
+.gym-meal-card__meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(17, 24, 39, 0.60);
+  font-weight: 800;
+}
+
+.gym-meal-item {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.gym-meal-item__name {
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.gym-meal-item__meta {
+  font-size: 11px;
+  color: rgba(17, 24, 39, 0.60);
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.gym-dashboard-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.gym-week-tabs {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.gym-day-tab {
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: var(--gym-chip-bg);
+  border-radius: 16px;
+  padding: 10px 10px;
+  text-align: left;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.gym-day-tab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 44px rgba(17, 24, 39, 0.08);
+}
+
+.gym-day-tab.is-active {
+  border-color: rgba(108, 99, 255, 0.72);
+  box-shadow: 0 26px 66px rgba(108, 99, 255, 0.18);
+}
+
+.gym-day-tab.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(0, 194, 168, 0.95), rgba(108, 99, 255, 0.86));
+}
+
+.gym-day-tab.is-today {
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,0.92), rgba(108,99,255,0.16)),
+    rgba(108, 99, 255, 0.06);
+}
+
+.gym-day-tab.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gym-day-tab__dow {
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  font-size: 12.5px;
+}
+
+.gym-day-tab__date {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(17, 24, 39, 0.62);
+  font-weight: 800;
+}
+
+.gym-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(255, 255, 255, 0.70);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
+}
+
+.gym-row + .gym-row {
+  margin-top: 10px;
+}
+
+.gym-row__title {
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.gym-row__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.60);
+  font-weight: 800;
+}
+
+.gym-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  background: rgba(17, 24, 39, 0.04);
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.gym-badge.is-readonly {
+  border-color: rgba(255, 77, 109, 0.20);
+  background: rgba(255, 77, 109, 0.08);
+  color: rgba(171, 13, 51, 0.92);
+}
+
+.gym-badge.is-today {
+  border-color: rgba(0, 194, 168, 0.22);
+  background: rgba(0, 194, 168, 0.10);
+  color: rgba(6, 122, 107, 0.98);
+}
+
+.gym-helper {
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.62);
+  font-weight: 800;
+}
+
+.gym-skeleton {
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(17,24,39,0.06), rgba(17,24,39,0.03), rgba(17,24,39,0.06));
+  background-size: 200% 100%;
+  animation: gym-shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes gym-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.gym-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 992px) {
+  .gym-dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  .gym-meals-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gym-dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+  .gym-week-tabs {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(86px, 1fr);
+    grid-template-columns: none;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .gym-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .gym-meals-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.gym-mode .app-topbar,
+  body.gym-mode .glass-card {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.gym-details {
+  border: 1px solid rgba(17, 24, 39, 0.10);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 10px 12px;
+}
+
+.gym-details__summary {
+  cursor: pointer;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.92);
+  list-style: none;
+}
+
+.gym-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.gym-details__summary::before {
+  content: "›";
+  display: inline-block;
+  margin-right: 8px;
+  transform: rotate(0deg);
+  transition: transform 0.15s ease;
+  opacity: 0.85;
+}
+
+details[open] > .gym-details__summary::before {
+  transform: rotate(90deg);
+}
+
+.gym-details__body {
+  margin-top: 10px;
+}
+
+.gym-link-grid {
+  align-items: start;
+}
+
+.gym-click-row {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+
+.gym-click-row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem var(--gym-focus-soft);
+}
+
+.gym-click-row.is-selected {
+  border-color: rgba(108, 99, 255, 0.72);
+  box-shadow: 0 26px 66px rgba(108, 99, 255, 0.14);
+}
+
+.gym-mini-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.gym-mini-list li {
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.70);
+  font-weight: 800;
+}

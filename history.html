@@ -61,6 +61,10 @@
           <i class="bi bi-gear nav-icon" aria-hidden="true"></i>
           <span>Settings</span>
         </a>
+        <a class="nav-link" href="gym/dashboard.html">
+          <i class="bi bi-activity nav-icon" aria-hidden="true"></i>
+          <span>Gym</span>
+        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -251,7 +255,9 @@
 
                   <div class="insights-divider"></div>
                   <div class="section-title">Category Breakdown</div>
-                  <canvas id="compareCategoryChartA" height="120" style="height: 10px !important;" class="mt-2"></canvas>
+                  <div class="chart-wrap chart-wrap--donut-sm mt-2">
+                    <canvas id="compareCategoryChartA" role="img" aria-label="Category breakdown for month A"></canvas>
+                  </div>
 
                   <div class="insights-divider"></div>
                   <div class="section-title">Notes Summary</div>
@@ -273,7 +279,9 @@
 
                   <div class="insights-divider"></div>
                   <div class="section-title">Category Breakdown</div>
-                  <canvas id="compareCategoryChartB" height="220" class="mt-2"></canvas>
+                  <div class="chart-wrap chart-wrap--donut-sm mt-2">
+                    <canvas id="compareCategoryChartB" role="img" aria-label="Category breakdown for month B"></canvas>
+                  </div>
 
                   <div class="insights-divider"></div>
                   <div class="section-title">Notes Summary</div>
@@ -302,7 +310,9 @@
             <div class="insights-divider"></div>
             <div class="section-title">Category Breakdown</div>
             <div class="section-subtitle">Active habits × days in month.</div>
-            <canvas id="historyCategoryChart" height="120" class="mt-2"></canvas>
+            <div class="chart-wrap chart-wrap--donut mt-2">
+              <canvas id="historyCategoryChart" role="img" aria-label="Category breakdown for selected month"></canvas>
+            </div>
           </section>
 
           <section class="card glass-card p-4 mt-4">

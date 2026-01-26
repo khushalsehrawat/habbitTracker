@@ -1,7 +1,19 @@
+function getDefaultBaseUrl() {
+  const { protocol, hostname, port, origin } = window.location;
+
+  // Local dev: static server (Live Server) + backend on 8080.
+  if ((hostname === "localhost" || hostname === "127.0.0.1") && port === "5500") {
+    return `${protocol}//${hostname}:8080`;
+  }
+
+  // Docker/prod: frontend + API served on same origin (nginx reverse proxy).
+  return origin;
+}
+
 const BASE_URL =
   localStorage.getItem("ht.apiBase") ||
   new URLSearchParams(window.location.search).get("apiBase") ||
-  "http://localhost:8080";
+  getDefaultBaseUrl();
 
 const HT_DEBUG =
   localStorage.getItem("ht.debug") === "1" ||
@@ -11,13 +23,19 @@ function getAccessToken() {
   return localStorage.getItem("token");
 }
 
+function getLoginHref() {
+  const path = String(window.location.pathname || "").replace(/\\/g, "/");
+  if (path.includes("/gym/")) return "../login.html";
+  return "login.html";
+}
+
 function handleUnauthorized() {
   if (typeof window.htLogoutAndRedirect === "function") {
     window.htLogoutAndRedirect();
     return;
   }
   localStorage.removeItem("token");
-  window.location.href = "login.html";
+  window.location.href = getLoginHref();
 }
 
 function logDebug(...args) {
@@ -64,6 +82,11 @@ async function apiFetch(path, options) {
     handleUnauthorized();
     throw new Error("Unauthorized");
   }
+  if (response.status === 403 && path.startsWith("/api/")) {
+    // Spring Security may return 403 for missing/invalid auth when no entrypoint is configured.
+    handleUnauthorized();
+    throw new Error("Unauthorized");
+  }
 
   return response;
 }
@@ -77,7 +100,7 @@ async function apiJson(path, options) {
   }
 
   const bodyText = await response.text().catch(() => "");
-  let message = "Request failed";
+  let message = `Request failed (${response.status || "unknown"})`;
   try {
     const json = bodyText ? JSON.parse(bodyText) : null;
     if (json?.message) message = json.message;
@@ -235,4 +258,128 @@ async function exportMonthText(year, month) {
 
 async function getMonthlyAiPrompt(year, month) {
   return apiJson(`/api/ai/monthly-prompt/${year}/${month}`, { method: "GET" });
+}
+
+// -----------------------
+// Gym (protected)
+// -----------------------
+
+async function getGymDashboard(date) {
+  const params = date ? `?${new URLSearchParams({ date }).toString()}` : "";
+  return apiJson(`/api/gym/dashboard${params}`, { method: "GET" });
+}
+
+async function saveGymWorkout(date, logs) {
+  return apiJson(`/api/gym/day/${date}/workout`, {
+    method: "PUT",
+    body: JSON.stringify({ logs })
+  });
+}
+
+async function saveGymMeals(date, meals) {
+  return apiJson(`/api/gym/day/${date}/meals`, {
+    method: "PUT",
+    body: JSON.stringify({ meals })
+  });
+}
+
+async function getGymExercises() {
+  return apiJson("/api/gym/exercises", { method: "GET" });
+}
+
+async function getGymExercisesAll() {
+  return apiJson("/api/gym/exercises/all", { method: "GET" });
+}
+
+async function createGymExercise(exerciseRequest) {
+  return apiJson("/api/gym/exercises", {
+    method: "POST",
+    body: JSON.stringify(exerciseRequest)
+  });
+}
+
+async function updateGymExercise(exerciseId, exerciseRequest) {
+  return apiJson(`/api/gym/exercises/${exerciseId}`, {
+    method: "PUT",
+    body: JSON.stringify(exerciseRequest)
+  });
+}
+
+async function deactivateGymExercise(exerciseId) {
+  return apiJson(`/api/gym/exercises/${exerciseId}`, { method: "DELETE" });
+}
+
+async function getGymWorkouts() {
+  return apiJson("/api/gym/workouts", { method: "GET" });
+}
+
+async function getGymWorkoutsAll() {
+  return apiJson("/api/gym/workouts/all", { method: "GET" });
+}
+
+async function createGymWorkout(workoutRequest) {
+  return apiJson("/api/gym/workouts", {
+    method: "POST",
+    body: JSON.stringify(workoutRequest)
+  });
+}
+
+async function updateGymWorkout(workoutId, workoutRequest) {
+  return apiJson(`/api/gym/workouts/${workoutId}`, {
+    method: "PUT",
+    body: JSON.stringify(workoutRequest)
+  });
+}
+
+async function deactivateGymWorkout(workoutId) {
+  return apiJson(`/api/gym/workouts/${workoutId}`, { method: "DELETE" });
+}
+
+async function getGymPlanCurrent() {
+  return apiJson("/api/gym/plan/current", { method: "GET" });
+}
+
+async function saveGymPlan(planRequest) {
+  return apiJson("/api/gym/plan", {
+    method: "POST",
+    body: JSON.stringify(planRequest)
+  });
+}
+
+async function getGymBody(date) {
+  const params = date ? `?${new URLSearchParams({ date }).toString()}` : "";
+  return apiJson(`/api/gym/body${params}`, { method: "GET" });
+}
+
+async function setGymBodyWeight(weightKg) {
+  return apiJson("/api/gym/body", {
+    method: "PUT",
+    body: JSON.stringify({ weightKg })
+  });
+}
+
+async function getGymMealTemplates() {
+  return apiJson("/api/gym/meals/templates", { method: "GET" });
+}
+
+async function getGymMealTemplatesAll() {
+  return apiJson("/api/gym/meals/templates/all", { method: "GET" });
+}
+
+async function createGymMealTemplate(templateRequest) {
+  return apiJson("/api/gym/meals/templates", {
+    method: "POST",
+    body: JSON.stringify(templateRequest)
+  });
+}
+
+async function updateGymMealTemplate(templateId, templateRequest) {
+  return apiJson(`/api/gym/meals/templates/${templateId}`, {
+    method: "PUT",
+    body: JSON.stringify(templateRequest)
+  });
+}
+
+async function deactivateGymMealTemplate(templateId) {
+  return apiJson(`/api/gym/meals/templates/${templateId}`, { method: "DELETE" });
 }

@@ -15,6 +15,8 @@
   const daySubtitle = document.getElementById("dashDaySubtitle");
   const dashboardStatus = document.getElementById("dashboardStatus");
   const saveTodayBtn = document.getElementById("lockDayBtn");
+  const journalBox = document.getElementById("dashJournal");
+  const journalSubtitle = document.getElementById("dashJournalSubtitle");
 
   const dayProgress = document.getElementById("todayProgress");
   const dayProgressValue = document.getElementById("todayProgressValue");
@@ -313,6 +315,47 @@
     dayProgress?.style.setProperty("--p", String(percent));
     if (dayProgressValue) dayProgressValue.textContent = `${percent}%`;
     if (dayProgressLabel) dayProgressLabel.textContent = `${completed}/${total}`;
+  }
+
+  function renderJournal() {
+    if (!journalBox) return;
+
+    const entry = getSelectedEntry();
+    const editable = isSelectedEditable();
+    const nextText = entry?.journalText ? String(entry.journalText) : "";
+
+    if (journalSubtitle) {
+      journalSubtitle.textContent = editable
+        ? "Saved with “Save Today” (or auto-save if enabled)."
+        : "Read-only. Only today can be edited.";
+    }
+
+    journalBox.readOnly = !editable;
+    journalBox.disabled = !selectedIso || (!entry && !editable);
+
+    if (journalBox.value !== nextText) {
+      let start = null;
+      let end = null;
+      const focused = document.activeElement === journalBox;
+      if (focused) {
+        try {
+          start = journalBox.selectionStart;
+          end = journalBox.selectionEnd;
+        } catch {
+          // ignore
+        }
+      }
+
+      journalBox.value = nextText;
+
+      if (focused && start != null && end != null) {
+        try {
+          journalBox.setSelectionRange(start, end);
+        } catch {
+          // ignore
+        }
+      }
+    }
   }
 
   function renderHabits() {
@@ -1014,6 +1057,7 @@
 
   function renderSelectedDay() {
     updateSelectedDayHeader();
+    renderJournal();
     if (taskList) renderHabits();
     else updateSelectedDayRing();
   }
@@ -1090,6 +1134,15 @@
       if (saveTodayBtn) {
         saveTodayBtn.addEventListener("click", () => {
           saveTodayNow({ kind: "manual" }).catch(() => {});
+        });
+      }
+
+      if (journalBox) {
+        journalBox.addEventListener("input", () => {
+          if (!isSelectedEditable()) return;
+          if (!todayEntry) return;
+          todayEntry.journalText = journalBox.value || "";
+          scheduleAutoSave();
         });
       }
 

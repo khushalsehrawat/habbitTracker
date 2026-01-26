@@ -70,6 +70,8 @@
   let compareCategoryChartA = null;
   let compareCategoryChartB = null;
   let compareVisible = false;
+  let loadedYear = null;
+  let loadedMonth = null;
 
   function pad2(n) {
     return String(n).padStart(2, "0");
@@ -92,6 +94,49 @@
 
   function monthName(year, month) {
     return new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  function compareYm(y1, m1, y2, m2) {
+    if (y1 !== y2) return y1 - y2;
+    return m1 - m2;
+  }
+
+  function getMinMonth() {
+    const signup = profile?.signupDate ? fromISODate(profile.signupDate) : null;
+    if (!signup) return null;
+    return { year: signup.getFullYear(), month: signup.getMonth() + 1, day: signup.getDate() };
+  }
+
+  function getMaxMonth() {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+  }
+
+  function normalizeMonth(year, month) {
+    let y = Number(year);
+    let m = Number(month);
+    if (!Number.isFinite(y) || !Number.isFinite(m)) return { year, month };
+
+    const min = getMinMonth();
+    const max = getMaxMonth();
+    if (min && compareYm(y, m, min.year, min.month) < 0) {
+      y = min.year;
+      m = min.month;
+    }
+    if (compareYm(y, m, max.year, max.month) > 0) {
+      y = max.year;
+      m = max.month;
+    }
+    return { year: y, month: m };
+  }
+
+  function updateMonthNavButtons(year, month) {
+    const min = getMinMonth();
+    const max = getMaxMonth();
+    const atMin = min ? compareYm(year, month, min.year, min.month) <= 0 : false;
+    const atMax = compareYm(year, month, max.year, max.month) >= 0;
+    if (prevMonthBtn) prevMonthBtn.disabled = atMin;
+    if (nextMonthBtn) nextMonthBtn.disabled = atMax;
   }
 
   function clampPercent(n) {
@@ -215,6 +260,75 @@
     return map;
   }
 
+  function isIsoInMonth(iso, year, month) {
+    if (!iso) return false;
+    const d = fromISODate(iso);
+    return d.getFullYear() === year && d.getMonth() + 1 === month;
+  }
+
+  function defaultIsoForMonth(year, month) {
+    const min = getMinMonth();
+    const max = getMaxMonth();
+
+    let day = 1;
+    if (min && min.year === year && min.month === month) day = Math.max(day, min.day);
+    if (max.year === year && max.month === month) day = Math.min(day, max.day);
+
+    return toISODate(new Date(year, month - 1, day));
+  }
+
+  function buildCategoryChart(canvasEl, labels, values, { compact = false } = {}) {
+    const datasetOptions = {
+      backgroundColor: [
+        "rgba(108, 99, 255, 0.85)",
+        "rgba(16, 185, 129, 0.75)",
+        "rgba(245, 158, 11, 0.75)",
+        "rgba(59, 130, 246, 0.70)",
+        "rgba(239, 68, 68, 0.70)",
+        "rgba(17, 24, 39, 0.20)"
+      ],
+      borderColor: "rgba(255,255,255,0.9)",
+      borderWidth: 2,
+      hoverOffset: compact ? 4 : 6
+    };
+
+    return new Chart(canvasEl, {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [{ data: values, ...datasetOptions }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: compact ? "74%" : "70%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true,
+              pointStyle: "circle",
+              boxWidth: 7,
+              boxHeight: 7,
+              padding: compact ? 10 : 12,
+              font: { size: compact ? 10 : 11, weight: "700" }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const label = String(ctx.label || "Category");
+                const value = Number(ctx.parsed);
+                const v = Number.isFinite(value) ? value.toFixed(1) : "0.0";
+                return `${label}: ${v}%`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
   function renderCalendar(year, month) {
     calendarDays.innerHTML = "";
     const dim = daysInMonth(year, month);
@@ -225,6 +339,7 @@
     const signup = profile?.signupDate ? fromISODate(profile.signupDate) : null;
     const today = new Date();
     const todayIso = toISODate(today);
+    const todayCutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     const map = buildEntryMap(monthEntries);
 
@@ -242,7 +357,7 @@
       const iso = toISODate(dateObj);
 
       const beforeSignup = signup ? dateObj < signup : false;
-      const isFuture = dateObj > new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const isFuture = dateObj > todayCutoff;
       const entry = map.get(iso) || null;
       const locked = Boolean(entry?.locked);
       const percent = entry ? entryCompletionPercent(entry) : 0;
@@ -251,15 +366,26 @@
       btn.type = "button";
       btn.className = "calendar-cell";
       btn.dataset.date = iso;
-      btn.disabled = beforeSignup;
+      btn.disabled = beforeSignup || isFuture;
 
       const selected = historyDate?.value === iso;
       if (selected) btn.classList.add("is-selected");
       if (iso === todayIso) btn.classList.add("is-today");
-      if (beforeSignup) btn.classList.add("is-disabled");
+      if (beforeSignup || isFuture) btn.classList.add("is-disabled");
       if (isFuture) btn.classList.add("is-future");
       if (entry && locked) btn.classList.add("is-locked");
       if (entry && !locked) btn.classList.add("is-open");
+      if (!entry) btn.classList.add("no-entry");
+
+      const labelDate = dateObj.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+      const labelParts = [
+        labelDate,
+        entry ? `${Math.round(clampPercent(percent))}%` : "No entry",
+        locked ? "Locked" : "",
+        isFuture ? "Future date" : ""
+      ].filter(Boolean);
+      btn.setAttribute("aria-label", labelParts.join(" • "));
+      btn.title = labelParts.join(" • ");
 
       btn.innerHTML = `
         <div class="calendar-cell__top">
@@ -460,13 +586,17 @@
     });
   }
 
-  async function selectDay(iso) {
+  async function selectDay(iso, { ensureMonthLoaded = true } = {}) {
     const d = fromISODate(iso);
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
 
     yearSelect.value = String(y);
     monthSelect.value = String(m);
+
+    if (ensureMonthLoaded && (loadedYear !== y || loadedMonth !== m)) {
+      await loadMonth(y, m, { syncSelectedDate: false });
+    }
 
     const minDate = profile?.signupDate ? fromISODate(profile.signupDate) : null;
     if (minDate && d < minDate) {
@@ -668,40 +798,11 @@
       const catA = buildCategoryBreakdown(allHabits, entriesA || [], dimA);
       const catB = buildCategoryBreakdown(allHabits, entriesB || [], dimB);
 
-      const chartOptions = { responsive: true, plugins: { legend: { position: "bottom" } } };
-      const datasetOptions = {
-        backgroundColor: [
-          "rgba(108, 99, 255, 0.85)",
-          "rgba(16, 185, 129, 0.75)",
-          "rgba(245, 158, 11, 0.75)",
-          "rgba(59, 130, 246, 0.70)",
-          "rgba(239, 68, 68, 0.70)",
-          "rgba(17, 24, 39, 0.20)"
-        ],
-        borderColor: "rgba(255,255,255,0.9)",
-        borderWidth: 2,
-        hoverOffset: 6
-      };
-
       destroyChart(compareCategoryChartA);
-      compareCategoryChartA = new Chart(compareCategoryChartAEl, {
-        type: "doughnut",
-        data: {
-          labels: catA.labels,
-          datasets: [{ data: catA.values, ...datasetOptions }]
-        },
-        options: chartOptions
-      });
+      compareCategoryChartA = buildCategoryChart(compareCategoryChartAEl, catA.labels, catA.values, { compact: true });
 
       destroyChart(compareCategoryChartB);
-      compareCategoryChartB = new Chart(compareCategoryChartBEl, {
-        type: "doughnut",
-        data: {
-          labels: catB.labels,
-          datasets: [{ data: catB.values, ...datasetOptions }]
-        },
-        options: chartOptions
-      });
+      compareCategoryChartB = buildCategoryChart(compareCategoryChartBEl, catB.labels, catB.values, { compact: true });
 
       renderNotesSummary(compareNotesA, buildNotesSummary(entriesA || []));
       renderNotesSummary(compareNotesB, buildNotesSummary(entriesB || []));
@@ -715,9 +816,16 @@
     }
   }
 
-  async function loadMonth(year, month) {
+  async function loadMonth(year, month, { syncSelectedDate = true } = {}) {
     loadBtn.disabled = true;
     loadBtn.classList.add("is-loading");
+
+    const normalized = normalizeMonth(year, month);
+    year = normalized.year;
+    month = normalized.month;
+    yearSelect.value = String(year);
+    monthSelect.value = String(month);
+    updateMonthNavButtons(year, month);
 
     const dim = daysInMonth(year, month);
     const first = new Date(year, month - 1, 1);
@@ -812,32 +920,21 @@
       }
 
       destroyChart(categoryChart);
-      categoryChart = new Chart(categoryChartEl, {
-        type: "doughnut",
-        data: {
-          labels,
-          datasets: [{
-            data: values,
-            backgroundColor: [
-              "rgba(108, 99, 255, 0.85)",
-              "rgba(16, 185, 129, 0.75)",
-              "rgba(245, 158, 11, 0.75)",
-              "rgba(59, 130, 246, 0.70)",
-              "rgba(239, 68, 68, 0.70)",
-              "rgba(17, 24, 39, 0.20)"
-            ],
-            borderColor: "rgba(255,255,255,0.9)",
-            borderWidth: 2,
-            hoverOffset: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: "bottom" } }
-        }
-      });
+      categoryChart = buildCategoryChart(categoryChartEl, labels, values, { compact: false });
+
+      loadedYear = year;
+      loadedMonth = month;
 
       renderCalendar(year, month);
+      updateMonthNavButtons(year, month);
+
+      if (syncSelectedDate && historyDate) {
+        const nextIso = isIsoInMonth(historyDate.value, year, month) ? historyDate.value : defaultIsoForMonth(year, month);
+        if (historyDate.value !== nextIso) historyDate.value = nextIso;
+        if (historyDate.value) await selectDay(historyDate.value, { ensureMonthLoaded: false });
+      }
+
+      if (compareVisible) await loadCompare();
 
       document.querySelectorAll(".glass-card").forEach((el, i) => {
         el.classList.add("fade-up");
@@ -913,13 +1010,6 @@
     compareYearSelect?.addEventListener("change", loadCompare);
     compareMonthSelect?.addEventListener("change", loadCompare);
 
-    yearSelect.addEventListener("change", () => {
-      if (compareVisible) loadCompare();
-    });
-    monthSelect.addEventListener("change", () => {
-      if (compareVisible) loadCompare();
-    });
-
     copyPromptBtn?.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(promptBox.value || "");
@@ -937,7 +1027,6 @@
 
     // Initial load
     await loadMonth(Number(yearSelect.value), Number(monthSelect.value));
-    if (historyDate?.value) await selectDay(historyDate.value);
   }
 
   init();

@@ -2,7 +2,9 @@ function htLogoutAndRedirect() {
   localStorage.removeItem("token");
   localStorage.removeItem("fullName");
   localStorage.removeItem("email");
-  window.location.href = "login.html";
+  const path = String(window.location.pathname || "").replace(/\\/g, "/");
+  const loginHref = path.includes("/gym/") ? "../login.html" : "login.html";
+  window.location.href = loginHref;
 }
 
 window.htLogoutAndRedirect = htLogoutAndRedirect;
