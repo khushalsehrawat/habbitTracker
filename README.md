@@ -7,7 +7,7 @@
 
 Each HTML page includes a page-specific description and TheBenzzCreations author and creator metadata. The public landing page (`index.html`) also includes Open Graph and Twitter metadata, one WebSite JSON-LD block identifying the creator, and a visible developer credit in its existing footer.
 
-Existing page titles, HabitTracker branding, navigation and application behavior are preserved. The footer credit uses `rel="noopener noreferrer nofollow"` for the promotional link.
+Existing page titles, HabitTracker branding, navigation and application behavior are preserved. The footer credit uses `rel="nofollow"` for the promotional link.
 
 The official public URL has not been supplied, so canonical links, `og:url` and the WebSite `url` are intentionally omitted. Add them only after verifying HabitTracker's public URL; the developer website must not be used as the application's canonical URL. No social preview image is configured because no suitable image asset is present. Structured data does not guarantee search rich results.
 
