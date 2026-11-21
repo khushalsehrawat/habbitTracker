@@ -1,0 +1,25 @@
+{
+  "sites": [
+    {
+      "name": "habbitTracker",
+      "root": ".",
+      "base_url": "https://khushalsehrawat.github.io/habbitTracker/",
+      "pages": {
+        "dashboard.html": "https://khushalsehrawat.github.io/habbitTracker/dashboard.html",
+        "gym/body-settings.html": "https://khushalsehrawat.github.io/habbitTracker/gym/body-settings.html",
+        "gym/dashboard.html": "https://khushalsehrawat.github.io/habbitTracker/gym/dashboard.html",
+        "gym/exercise-setup.html": "https://khushalsehrawat.github.io/habbitTracker/gym/exercise-setup.html",
+        "gym/meal-setup.html": "https://khushalsehrawat.github.io/habbitTracker/gym/meal-setup.html",
+        "gym/workout-setup.html": "https://khushalsehrawat.github.io/habbitTracker/gym/workout-setup.html",
+        "habit.html": "https://khushalsehrawat.github.io/habbitTracker/habit.html",
+        "history.html": "https://khushalsehrawat.github.io/habbitTracker/history.html",
+        "index.html": "https://khushalsehrawat.github.io/habbitTracker/",
+        "insights.html": "https://khushalsehrawat.github.io/habbitTracker/insights.html",
+        "login.html": "https://khushalsehrawat.github.io/habbitTracker/login.html",
+        "pulseboard.html": "https://khushalsehrawat.github.io/habbitTracker/pulseboard.html",
+        "register.html": "https://khushalsehrawat.github.io/habbitTracker/register.html",
+        "settings.html": "https://khushalsehrawat.github.io/habbitTracker/settings.html"
+      }
+    }
+  ]
+}
